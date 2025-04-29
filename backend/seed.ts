@@ -16,17 +16,17 @@ async function bootstrap() {
 
   const seedData: Partial<Activity>[] = [
     // Case 1: 3 day recovery success
-    { case: 'case1', date: now.subtract(3, 'day').format('YYYY-MM-DD'), activities: ['A'] },
-    { case: 'case1', date: now.format('YYYY-MM-DD'), activities: ['A', 'B', 'C'] },
+    { case: 'case1', date: now.subtract(3, 'day').format('YYYY-MM-DD'), activities: 1 },
+    { case: 'case1', date: now.format('YYYY-MM-DD'), activities: 3 },
 
     // Case 2: 3 day recovery ongoing
-    { case: 'case2', date: now.subtract(4, 'day').format('YYYY-MM-DD'), activities: ['A'] },
-    { case: 'case2', date: now.subtract(3, 'day').format('YYYY-MM-DD'), activities: ['B'] },
-    { case: 'case2', date: now.format('YYYY-MM-DD'), activities: ['C'] },
+    { case: 'case2', date: now.subtract(4, 'day').format('YYYY-MM-DD'), activities: 1 },
+    { case: 'case2', date: now.subtract(3, 'day').format('YYYY-MM-DD'), activities: 1 },
+    { case: 'case2', date: now.format('YYYY-MM-DD'), activities: 1 },
 
     // Case 3: 3 day recovery fail
-    { case: 'case3', date: now.subtract(4, 'day').format('YYYY-MM-DD'), activities: ['A'] },
-    { case: 'case3', date: now.subtract(1, 'day').format('YYYY-MM-DD'), activities: ['A', 'B', 'C'] },
+    { case: 'case3', date: now.subtract(4, 'day').format('YYYY-MM-DD'), activities: 1 },
+    { case: 'case3', date: now.subtract(1, 'day').format('YYYY-MM-DD'), activities: 3 },
   ];
 
   for (const item of seedData) {

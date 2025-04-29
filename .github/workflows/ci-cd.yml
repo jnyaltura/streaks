@@ -1,0 +1,70 @@
+name: CI/CD for Streaks App
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint-build:
+    name: Lint & Build (frontend + backend)
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        app: [frontend, backend]
+
+    defaults:
+      run:
+        working-directory: ${{ matrix.app }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Use Node.js 18
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Lint
+        run: npm run lint
+
+      - name: Build app
+        run: npm run build
+
+  test-backend:
+    name: Run NestJS Tests
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm run test
+
+  deploy:
+    name: Deploy Placeholder
+    needs: [lint-build, test-backend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Ready to deploy
+        run: echo "need to have server insert here"

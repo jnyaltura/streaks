@@ -7,7 +7,6 @@ export class StreaksController {
 
   @Get(':case')
   getStreak(@Param('case') caseName: string) {
-    console.log("Case is API GET is called")
     return this.streaksService.getStreaks(caseName);
   }
 }

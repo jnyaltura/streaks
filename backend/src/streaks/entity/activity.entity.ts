@@ -11,6 +11,6 @@ export class Activity {
   @Column()
   date: string;
 
-  @Column('simple-array')
-  activities: string[];
+  @Column()
+  activities: number; // was: string[] -> now: number
 }
