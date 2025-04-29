@@ -32,14 +32,10 @@ describe('StreaksController (e2e)', () => {
   });
 
   it('/streaks/case2 (GET) should return 200 OK', async () => {
-    await request(app.getHttpServer())
-      .get('/streaks/case2')
-      .expect(200);
+    await request(app.getHttpServer()).get('/streaks/case2').expect(200);
   });
 
   it('/streaks/invalid (GET) should return 404 or handle gracefully', async () => {
-    const response = await request(app.getHttpServer())
-      .get('/streaks/invalid')
-      .expect(200); // or expect(404) if you throw NotFoundException
+    await request(app.getHttpServer()).get('/streaks/invalid').expect(200); // or expect(404) if you throw NotFoundException
   });
 });

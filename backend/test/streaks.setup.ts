@@ -1,9 +1,7 @@
 import { DataSource } from 'typeorm';
 import { getDataSourceToken } from '@nestjs/typeorm';
-import { TestingModule } from '@nestjs/testing';
 import { Activity } from '../src/streaks/entity/activity.entity'; // adjust path if needed
 
-let moduleRef: TestingModule;
 let dataSource: DataSource;
 
 /**
