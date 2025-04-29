@@ -27,6 +27,7 @@ export default function HomePage() {
       try {
         const response = await axios.get<StreakData>(`/streaks/${caseId}`);
         setData(response.data);
+      
       } catch (err: any) {
         setError(err.message || 'Error fetching data');
       }
