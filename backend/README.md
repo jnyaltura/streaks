@@ -1,98 +1,98 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Streak Reminder Push Notification System (GCP + Firebase)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+This document outlines how to implement a **Streak Reminder Push Notification System** to help users maintain their activity streaks using **Google Cloud Platform (GCP)** and **Firebase Cloud Messaging (FCM)**.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+> **Note:** For now, the backend is currently using **SQLite** for development and seeding. Future migrations to PostgreSQL or Firestore can be considered based on scalability needs.
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 📌 Goal
+Alert users when they are **at risk of losing their activity streak**, ideally **24 hours after their last activity** if no new action is taken.
 
-## Project setup
+---
 
-```bash
-$ npm install
-```
+## 🧱 System Architecture
 
-## Compile and run the project
+### 🔧 Backend (NestJS)
+- Expose an endpoint `/streaks` to provide streak data.
+- Mark a day as `AT_RISK` if it follows a `COMPLETED` day without a new activity.
+- Store activity logs in SQLite (for now).
 
-```bash
-# development
-$ npm run start
+### ☁️ Cloud Scheduler (GCP)
+- Runs **hourly or daily** to check which users are `AT_RISK`.
+- Triggers a Cloud Function that queries the backend or Firestore (future) for user activity states.
 
-# watch mode
-$ npm run start:dev
+### 🔁 Cloud Function (Node.js / TypeScript)
+- Fetches users with `AT_RISK` status.
+- Verifies if 24 hours have passed since the last `COMPLETED` activity.
+- Sends push notifications to eligible users.
 
-# production mode
-$ npm run start:prod
-```
+### 🔔 Firebase Cloud Messaging (FCM)
+- Used to deliver push notifications to client devices (iOS, Android, Web).
+- Devices must register and save their `fcmToken` with the backend.
 
-## Run tests
+---
 
-```bash
-# unit tests
-$ npm run test
+## ✅ Implementation Steps
 
-# e2e tests
-$ npm run test:e2e
+### 1. Save User Activity
+- Activity saved per user per date (e.g., `2024-04-27: 2 activities`).
+- SQLite schema:
+  ```ts
+  user_id | date       | activity_count
+  --------|------------|----------------
+  abc123  | 2024-04-27 | 2
+  ```
 
-# test coverage
-$ npm run test:cov
-```
+### 2. Mark Streak Status
+- Evaluate streak status in backend:
+  - `COMPLETED`: ≥1 activity
+  - `AT_RISK`: 0 activity the next day
 
-## Deployment
+### 3. Identify At-Risk Users (Cloud Function)
+- Query streaks API for all users.
+- Filter for users with `AT_RISK` status AND last completed activity > 24 hours ago.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+### 4. Send Push Notifications
+- Use FCM SDK to send personalized alerts:
+  ```ts
+  admin.messaging().sendToDevice(fcmToken, {
+    notification: {
+      title: 'You’re at risk of losing your streak!',
+      body: 'Add an activity today to keep your streak alive!'
+    }
+  });
+  ```
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+---
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+## 🧪 Edge Cases & Challenges
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+| Case | Handling |
+|------|----------|
+| User logs activity just before notification | Add debounce (30 min) before sending |
+| App uninstalled / FCM token expired | Use `messaging().send()` response to remove invalid tokens |
+| Users in different time zones | Normalize time using user’s stored timezone or UTC offset |
 
-## Resources
+---
 
-Check out a few resources that may come in handy when working with NestJS:
+## 🛡️ Security Considerations
+- Authenticate Cloud Function using GCP IAM roles.
+- Validate `fcmToken` ownership when registering devices.
+- Rate-limit push notifications to avoid spam.
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+---
 
-## Support
+## 🗺️ Future Improvements
+- Switch SQLite to **PostgreSQL** or **Firestore**.
+- Add in-app reminders (local notifications).
+- Provide streak recovery suggestions based on history.
+- Support silent push for background streak updates.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+---
 
-## Stay in touch
+## 🔚 Summary
+This streak reminder system combines **NestJS**, **GCP Cloud Functions**, and **Firebase Cloud Messaging** to motivate users to maintain streaks and drive engagement.
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+Let us know if you'd like code templates or deployment pipelines to go with this!
 
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
